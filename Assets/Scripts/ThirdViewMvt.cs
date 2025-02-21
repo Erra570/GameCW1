@@ -17,7 +17,7 @@ public class ThirdViewMvt : MonoBehaviour
     public float crouchingHeight;
     private float _standingHeight;
     private bool _isCrouching = false;
-
+    private bool _highlightingRewindable = false;
 
     void Start()
     {
@@ -31,6 +31,26 @@ public class ThirdViewMvt : MonoBehaviour
         float vertical = Input.GetAxisRaw("Vertical");
 
         Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
+
+        // Managing the rewindable objects highlighting
+        if (Input.GetKeyDown(KeyCode.R)){
+            _highlightingRewindable = !_highlightingRewindable;
+            HighlightRewindableObjects(_highlightingRewindable);
+            if (_highlightingRewindable)
+            {
+                Debug.Log("Highlighting rewindable");
+            }
+            else
+            {
+                Debug.Log("Not highlighting rewindable");
+            }
+        }
+
+        // Selecting a rewindable object with the mouse button
+        if (_highlightingRewindable && Input.GetMouseButtonDown(0))
+        {
+            SelectRewindableObject();
+        }
 
         // Crouching : 
         if (Input.GetButtonDown("Crouch"))
@@ -63,5 +83,46 @@ public class ThirdViewMvt : MonoBehaviour
             myController.Move(mvt * fallingSpeedMultiply *Time.deltaTime);
         }
 
+    }
+    // Highlighting rewindable objects
+    void HighlightRewindableObjects(bool highlight)
+    {
+        GameObject[] rewindableObjects = GameObject.FindGameObjectsWithTag("Rewindable");
+        foreach (GameObject obj in rewindableObjects)
+        {
+            Renderer objRenderer = obj.GetComponent<Renderer>();
+            if (objRenderer != null)
+            {
+                if (highlight)
+                {
+                    objRenderer.material.color = Color.yellow;
+                }
+                else
+                {
+                    objRenderer.material.color = Color.white;
+                }
+            }
+        }
+    }
+
+    // Selecting a rewindable object
+    void SelectRewindableObject()
+    {
+        Ray ray = new Ray(myThirdViewCam.position, myThirdViewCam.forward);
+        RaycastHit hit;
+
+        if (Physics.Raycast(ray, out hit, 10f))
+        {
+            if (hit.collider.CompareTag("Rewindable"))
+            {
+                TransformRecorder rewindScript = hit.collider.GetComponent<TransformRecorder>();
+                if (rewindScript != null)
+                {
+                    rewindScript.StartRewind();
+                    _highlightingRewindable = false;
+                    HighlightRewindableObjects(false); // to remove the highlighting
+                }
+            }
+        }
     }
 }
