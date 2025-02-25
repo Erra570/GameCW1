@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class ThirdViewMvt : MonoBehaviour
 {
+    public Animator animator;
     public CharacterController myController;
     public Transform myThirdViewCam;
 
@@ -22,6 +23,7 @@ public class ThirdViewMvt : MonoBehaviour
     private bool _isPushing = false;
     private GameObject _pushableObject;
     public float pushForce = 3f;
+    public float maxPushDistance = 2f;
 
     void Start()
     {
@@ -32,6 +34,7 @@ public class ThirdViewMvt : MonoBehaviour
     }
     void Update()
     {
+
         // Here put everything that cannot be done while choosing an object to rewind!!
         if (!_isRewindOn)
         {
@@ -44,15 +47,27 @@ public class ThirdViewMvt : MonoBehaviour
             if (_isPushing && _pushableObject != null)
             {
                 float moveInput = Input.GetAxisRaw("Vertical");
-                if (moveInput != 0f)
+
+                if (moveInput < 0)
                 {
-                    Rigidbody rb = _pushableObject.GetComponent<Rigidbody>();
-                    if (rb != null)
-                    {
-                        Vector3 moveDir = transform.forward * moveInput * (_isCrouching ? crouchingSpeed : standingSpeed) * Time.deltaTime;
-                        rb.MovePosition(rb.position + moveDir);
-                        myController.Move(moveDir);
-                    }
+                    StopPushing();
+                    return;
+                }
+
+                float distance = Vector3.Distance(transform.position, _pushableObject.transform.position);
+                if (distance > maxPushDistance)
+                {
+                    Debug.Log("Stopped pushing: too far from the object.");
+                    StopPushing();
+                    return;
+                }
+
+                Rigidbody rb = _pushableObject.GetComponent<Rigidbody>();
+                if (rb != null)
+                {
+                    Vector3 moveDir = transform.forward * moveInput * (_isCrouching ? crouchingSpeed : standingSpeed) * Time.deltaTime;
+                    rb.MovePosition(rb.position + moveDir);
+                    myController.Move(moveDir);
                 }
             }
 
@@ -67,6 +82,9 @@ public class ThirdViewMvt : MonoBehaviour
                     Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
 
                     myController.Move(moveDir.normalized * (_isCrouching ? crouchingSpeed : standingSpeed) * Time.deltaTime);
+                    animator.SetBool("isWalking", true);
+                } else {
+                    animator.SetBool("isWalking", false);
                 }
             } else {
                 float moveInput = Input.GetAxisRaw("Vertical");
@@ -79,6 +97,9 @@ public class ThirdViewMvt : MonoBehaviour
                         rb.MovePosition(rb.position + moveDir);
                         myController.Move(moveDir);
                     }
+                    animator.SetBool("isWalking", true);
+                } else {
+                    animator.SetBool("isWalking", false);
                 }
             }
 
@@ -92,11 +113,17 @@ public class ThirdViewMvt : MonoBehaviour
             // Crouching : 
             if (Input.GetButtonDown("Crouch"))
             {
+                if(!_isCrouching){
+                    animator.SetBool("isCrouching", true);
+                } else {
+                    animator.SetBool("isCrouching", false);
+                }
+                
                 _isCrouching = !_isCrouching;
                 myController.height = _isCrouching ? crouchingHeight : _standingHeight; // the controller mesh
 
                 // to change once we have a real character :
-                transform.localScale = new Vector3(1, _isCrouching?crouchingHeight:_standingHeight, 1); //The "shape"
+                // transform.localScale = new Vector3(1, _isCrouching?crouchingHeight:_standingHeight, 1); //The "shape"
 
                 myController.Move(Vector3.down * 0.1f);
             }
@@ -139,8 +166,8 @@ public class ThirdViewMvt : MonoBehaviour
     // Highlighting rewindable objects
     void HighlightRewindableObjects(bool highlight)
     {
-        GameObject[] rewindableObjects = GameObject.FindGameObjectsWithTag("Rewindable");
-        foreach (GameObject obj in rewindableObjects)
+        Rewindable[] rewindableObjects = GameObject.FindObjectsOfType<Rewindable>();
+        foreach (Rewindable obj in rewindableObjects)
         {
             Renderer objRenderer = obj.GetComponent<Renderer>();
             if (objRenderer != null)
@@ -156,9 +183,9 @@ public class ThirdViewMvt : MonoBehaviour
         Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
 
-        if (Physics.Raycast(ray, out hit, 20f))
+        if (Physics.Raycast(ray, out hit))
         {
-            if (hit.collider.CompareTag("Rewindable"))
+            if (hit.collider.GetComponent<Rewindable>() != null)
             {
                 RecordAndRewind rewindScript = hit.collider.GetComponent<RecordAndRewind>();
                 if (rewindScript != null)
@@ -184,14 +211,13 @@ public class ThirdViewMvt : MonoBehaviour
     void StartPushing()
     {
         if (_isPushing || _pushableObject != null) return;
-        Ray ray = new Ray(transform.position + Vector3.up * (myController.height/2), transform.forward);
+        animator.SetBool("isPushing", true);
+        Ray ray = new Ray(transform.position + Vector3.up, transform.forward);
         RaycastHit hit;
-
-        Debug.DrawRay(ray.origin, ray.direction * 2f, Color.red, 2f);
 
         if (Physics.Raycast(ray, out hit, 2f))
         {
-            if (hit.collider.CompareTag("Pushable"))
+            if (hit.collider.GetComponent<Pushable>() != null)
             {
                 RecordAndRewind rewindScript = hit.collider.GetComponent<RecordAndRewind>();
                 if (rewindScript != null && rewindScript.IsRewinding())
@@ -208,18 +234,11 @@ public class ThirdViewMvt : MonoBehaviour
                 if (rb != null)
                 {
                     rb.useGravity = false;
-                    rb.constraints = RigidbodyConstraints.FreezeRotation | RigidbodyConstraints.FreezePositionY;
-
-                    FixedJoint joint = _pushableObject.GetComponent<FixedJoint>();
-                    if (joint != null)
-                    {
-                        Destroy(joint);
-                    }
+                    rb.constraints = RigidbodyConstraints.FreezeRotation;
                     FixedJoint newJoint = _pushableObject.AddComponent<FixedJoint>();
                     newJoint.connectedBody = GetComponent<Rigidbody>();
                     newJoint.breakForce = 1000;
                 }
-                GetComponent<Animator>().SetBool("IsPushing", true);
                 Debug.Log("you can now push yipee!!");
 
             }
@@ -247,9 +266,7 @@ public class ThirdViewMvt : MonoBehaviour
             _isPushing = false;
             _pushableObject = null;
 
-            _turnSmoothVelocity = 0;
-
-            GetComponent<Animator>().SetBool("IsPushing", false);
+            animator.SetBool("isPushing", false);
             Debug.Log("you stopped pushing");
         }
     }

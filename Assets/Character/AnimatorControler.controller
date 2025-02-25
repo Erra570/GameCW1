@@ -48,14 +48,14 @@ AnimatorController:
     m_IKPass: 0
     m_SyncedLayerAffectsTiming: 0
     m_Controller: {fileID: 9100000}
---- !u!1102 &908619279289616424
+--- !u!1102 &4023766397345392
 AnimatorState:
   serializedVersion: 6
   m_ObjectHideFlags: 1
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: PUSHING
+  m_Name: PUSHING 0
   m_Speed: 1
   m_CycleOffset: 0
   m_Transitions: []
@@ -119,14 +119,14 @@ AnimatorStateMachine:
     m_State: {fileID: 6705749224921815902}
     m_Position: {x: 30, y: 310, z: 0}
   - serializedVersion: 1
-    m_State: {fileID: 908619279289616424}
-    m_Position: {x: 500, y: 40, z: 0}
-  - serializedVersion: 1
     m_State: {fileID: 7274042505148414389}
     m_Position: {x: 520, y: 310, z: 0}
   - serializedVersion: 1
     m_State: {fileID: 1821739563454920767}
     m_Position: {x: 520, y: 250, z: 0}
+  - serializedVersion: 1
+    m_State: {fileID: 4023766397345392}
+    m_Position: {x: 500, y: 120, z: 0}
   m_ChildStateMachines: []
   m_AnyStateTransitions: []
   m_EntryTransitions: []

@@ -17,7 +17,7 @@ public class RecordAndRewind : MonoBehaviour
     }
 
     // FixedUpdate is called once per unity-frame (0.02s by default)
-    //  unity-frames are not dependent on the framerate of the game so betetr to use for physics-related stuff!
+    // unity-frames are not dependent on the framerate of the game so better to use for physics-related stuff!
     void FixedUpdate()
     {
         if (_isRewinding)
@@ -30,8 +30,14 @@ public class RecordAndRewind : MonoBehaviour
         }
     }
 
+    private bool IsMoving()
+    {
+        return rb.velocity.magnitude > 0.01f || _positions.Count == 0 || transform.position != _positions[_positions.Count - 1];
+    }
+
     private void Record()
     {
+        if (!IsMoving()) return; // If the object is not moving, we don't record its position
         if (_positions.Count > Mathf.Round(recordTime / Time.fixedDeltaTime))
         {
             _positions.RemoveAt(0);
