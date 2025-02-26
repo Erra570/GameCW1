@@ -33,9 +33,9 @@ public class Seek : MonoBehaviour
         if (_isPatrolling)
         {
             Vector3 seekerPosition = transform.position;
-            seekerPosition.y += 5;
+            seekerPosition.y += 6;
             Vector3 PlayerPosition = playerTransform.position;
-            PlayerPosition.y -= 1;
+            PlayerPosition.y -= 2;
             Vector3 directionToPlayer = PlayerPosition - seekerPosition;
             RaycastHit rayHit;
 
@@ -43,7 +43,6 @@ public class Seek : MonoBehaviour
             {
                 // Player found ?
                 var angleToTarget = Vector3.Angle(transform.forward, directionToPlayer);
-                Debug.Log("Hit objct : "+ rayHit.transform.gameObject);
                 
                 _hasLineOfSight = (rayHit.transform.gameObject == playerGameObject) && (angleToTarget <= (visionFieldAngle / 2));
 
