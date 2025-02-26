@@ -133,10 +133,13 @@ public class ThirdViewMvt : MonoBehaviour
                 //myController.Move(Vector3.down * 0.1f);
             }
             // Running :
-            else if (Input.GetButtonDown("Run") && !_isCrouching)
+            if (Input.GetButton("Run") && !_isCrouching)
             {
                 _isRunning = !_isRunning;
-                animator.SetBool("isRunning", _isRunning);
+                animator.SetBool("isRunning", true);
+            } else {
+                _isRunning = false;
+                animator.SetBool("isRunning", false);
             }
 
 
