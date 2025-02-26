@@ -9,11 +9,16 @@ public class Seek : MonoBehaviour
     public float maxVisionDistance;
     public float visionFieldAngle;
 
+    private PatrolWithKeyPoints scriptPatrol;
+    private Chase scriptChase;
+
     private bool _hasLineOfSight = false;
+    private bool _isPatrolling = true;
 
     void Start()
     {
-
+        scriptPatrol = GetComponent<PatrolWithKeyPoints>();
+        scriptChase = GetComponent<Chase>();
     }
 
     private void Update()
@@ -24,27 +29,40 @@ public class Seek : MonoBehaviour
             return;
         }
 
-        Vector3 seekerPosition = transform.position;        
-        Vector3 directionToPlayer = playerTransform.position - transform.position;
 
-
-        //Debug.Log("seekerPosition.y:" + seekerPosition.y + " | directionToPlayer.y:" + directionToPlayer.y);
-
-        RaycastHit rayHit;
-        if (Physics.Raycast(seekerPosition, directionToPlayer, out rayHit, maxVisionDistance))
+        if (_isPatrolling)
         {
-            // Player found ?
-            var angleToTarget = Vector3.Angle(transform.forward, directionToPlayer);
-            _hasLineOfSight = (rayHit.transform.gameObject==playerGameObject) && (angleToTarget<=(visionFieldAngle/2));
-        }
-        else
-        {
-            _hasLineOfSight = false;
+            Vector3 seekerPosition = transform.position;
+            seekerPosition.y += 5;
+            Vector3 PlayerPosition = playerTransform.position;
+            PlayerPosition.y -= 1;
+            Vector3 directionToPlayer = PlayerPosition - seekerPosition;
+            RaycastHit rayHit;
+
+            if (Physics.Raycast(seekerPosition, directionToPlayer, out rayHit, maxVisionDistance))
+            {
+                // Player found ?
+                var angleToTarget = Vector3.Angle(transform.forward, directionToPlayer);
+                Debug.Log("Hit objct : "+ rayHit.transform.gameObject);
+                
+                _hasLineOfSight = (rayHit.transform.gameObject == playerGameObject) && (angleToTarget <= (visionFieldAngle / 2));
+
+                if (_hasLineOfSight)
+                {
+                    _isPatrolling = false;
+                    scriptPatrol.enabled = false;
+                    scriptChase.enabled = true;
+                }                
+            }
+            else
+            {
+                _hasLineOfSight = false;
+            }
+
+            // Raycast in green if Player in sight ; red otherwise
+            Color rayColor = _hasLineOfSight ? Color.green : Color.red;
+            Debug.DrawRay(seekerPosition, directionToPlayer, rayColor);  //DrawRay(StartPoint, EndPoint, Color)
         }
 
-
-        // Affichage du raycast en vert si le joueur est visible, sinon en rouge
-        Color rayColor = _hasLineOfSight ? Color.green : Color.red;
-        Debug.DrawRay(seekerPosition, directionToPlayer, rayColor); //DrawRay(StartPoint, EndPoint, Color)
     }
 }
