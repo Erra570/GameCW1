@@ -212,7 +212,6 @@ public class ThirdViewMvt : MonoBehaviour
     void StartPushing()
     {
         if (_isPushing || _pushableObject != null) return;
-        animator.SetBool("isPushing", true);
         Ray ray = new Ray(transform.position + Vector3.up, transform.forward);
         RaycastHit hit;
 
@@ -221,6 +220,7 @@ public class ThirdViewMvt : MonoBehaviour
             if (hit.collider.GetComponent<Pushable>() != null)
             {
                 RecordAndRewind rewindScript = hit.collider.GetComponent<RecordAndRewind>();
+                animator.SetBool("isPushing", true);
                 if (rewindScript != null && rewindScript.IsRewinding())
                 {
                     Debug.Log("Cannot push, object is rewinding!");
