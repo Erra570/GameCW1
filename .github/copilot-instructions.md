@@ -2,7 +2,7 @@
 - Project name: GameCW1
 - Unity version: Unity 2022.3.56f1
 - Active game object:
-  - Name: Player
-  - Tag: Player
+  - Name: Person
+  - Tag: Untagged
   - Layer: Default
 <!-- UNITY CODE ASSIST INSTRUCTIONS END -->
