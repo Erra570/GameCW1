@@ -5,8 +5,8 @@ using UnityEngine;
 public class PatrolWithKeyPoints : MonoBehaviour
 {
     public CharacterController myController;
+    public Animator animator;
     public float agentWalkingSpeed;
-    //public float agentRunningSpeed; // TODO : chase
     public float waitingTime;
 
     public Node[] myKeyNodes;
@@ -97,12 +97,14 @@ public class PatrolWithKeyPoints : MonoBehaviour
     IEnumerator waitAndGo(float seconds)
     {
         _isWaiting = true;
+        animator.SetBool("isWaiting", true);
         // TODO (maybe) : make the agent look around (animation + change its rotation) 
         yield return new WaitForSeconds(seconds);
 
         if(_currentKeyNodeIndex == myKeyNodes.Length)
             _currentKeyNodeIndex = 0; // restart the patrolling        
-        GoToNextKeyNode();       
+        GoToNextKeyNode();
+        animator.SetBool("isWaiting", false);
         _isWaiting = false;
     }
 }

@@ -13,7 +13,7 @@ public class Seek : MonoBehaviour
     private Chase scriptChase;
 
     private bool _hasLineOfSight = false;
-    private bool _isPatrolling = true;
+    private bool _isPatrolling = true;   
 
     void Start()
     {

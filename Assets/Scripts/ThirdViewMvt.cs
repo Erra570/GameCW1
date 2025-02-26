@@ -9,16 +9,19 @@ public class ThirdViewMvt : MonoBehaviour
     public Transform myThirdViewCam;
 
     public float standingSpeed;
-    public float fallingSpeedMultiply;
-
-    public float toSmoothMvt_Time;
-    private float _turnSmoothVelocity;
+    public float runningSpeed;
 
     public float crouchingSpeed;
     public float crouchingHeight;
+
+    public float fallingSpeedMultiply;
+    public float toSmoothMvt_Time;
+    private float _turnSmoothVelocity;
+
     private float _standingHeight;
     private bool _isCrouching = false;
     private bool _isRewindOn = false;
+    private bool _isRunning = false;
 
     private bool _isPushing = false;
     private GameObject _pushableObject;
@@ -28,9 +31,9 @@ public class ThirdViewMvt : MonoBehaviour
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false; 
+        Cursor.visible = false;
         _standingHeight = myController.height;
-        Debug.Log("Standing height : " + _standingHeight);
+        //Debug.Log("Standing height : " + _standingHeight);
     }
     void Update()
     {
@@ -65,14 +68,15 @@ public class ThirdViewMvt : MonoBehaviour
                 Rigidbody rb = _pushableObject.GetComponent<Rigidbody>();
                 if (rb != null)
                 {
-                    Vector3 moveDir = transform.forward * moveInput * (_isCrouching ? crouchingSpeed : standingSpeed) * Time.deltaTime;
+                    Vector3 moveDir = transform.forward * moveInput * standingSpeed * Time.deltaTime;
                     rb.MovePosition(rb.position + moveDir);
                     myController.Move(moveDir);
                 }
             }
 
             // Moving :
-            if (!_isPushing){
+            if (!_isPushing)
+            {
                 if (direction.magnitude >= 0.1f)
                 {
                     float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + myThirdViewCam.eulerAngles.y;
@@ -81,12 +85,16 @@ public class ThirdViewMvt : MonoBehaviour
 
                     Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
 
-                    myController.Move(moveDir.normalized * (_isCrouching ? crouchingSpeed : standingSpeed) * Time.deltaTime);
+                    myController.Move(moveDir.normalized * (_isCrouching ? crouchingSpeed : (_isRunning ? runningSpeed : standingSpeed)) * Time.deltaTime);
                     animator.SetBool("isWalking", true);
-                } else {
+                }
+                else
+                {
                     animator.SetBool("isWalking", false);
                 }
-            } else {
+            }
+            else
+            {
                 float moveInput = Input.GetAxisRaw("Vertical");
                 if (moveInput != 0f && _pushableObject != null)
                 {
@@ -98,7 +106,9 @@ public class ThirdViewMvt : MonoBehaviour
                         myController.Move(moveDir);
                     }
                     animator.SetBool("isWalking", true);
-                } else {
+                }
+                else
+                {
                     animator.SetBool("isWalking", false);
                 }
             }
@@ -107,26 +117,29 @@ public class ThirdViewMvt : MonoBehaviour
             if (!myController.isGrounded)
             {
                 Vector3 mvt = Vector3.zero + Physics.gravity;
-                myController.Move(mvt * fallingSpeedMultiply *Time.deltaTime);
+                myController.Move(mvt * fallingSpeedMultiply * Time.deltaTime);
             }
 
             // Crouching : 
-            if (Input.GetButtonDown("Crouch"))
+            if (Input.GetButtonDown("Crouch") && !_isRunning)
             {
-                if(!_isCrouching){
-                    animator.SetBool("isCrouching", true);
-                } else {
-                    animator.SetBool("isCrouching", false);
-                }
-                
                 _isCrouching = !_isCrouching;
+                animator.SetBool("isCrouching", _isCrouching);
+
                 myController.height = _isCrouching ? crouchingHeight : _standingHeight; // the controller mesh
 
                 // to change once we have a real character :
                 // transform.localScale = new Vector3(1, _isCrouching?crouchingHeight:_standingHeight, 1); //The "shape"
-
-                myController.Move(Vector3.down * 0.1f);
+                //myController.Move(Vector3.down * 0.1f);
             }
+            // Running :
+            else if (Input.GetButtonDown("Run") && !_isCrouching)
+            {
+                _isRunning = !_isRunning;
+                animator.SetBool("isRunning", _isRunning);
+            }
+
+
 
             if (Input.GetKeyDown(KeyCode.E))
             {
@@ -198,8 +211,8 @@ public class ThirdViewMvt : MonoBehaviour
                     HighlightRewindableObjects(_isRewindOn);
                 }
             }
-        } 
-        else 
+        }
+        else
         {
             _isRewindOn = false;
             Cursor.lockState = CursorLockMode.Locked;
@@ -243,14 +256,16 @@ public class ThirdViewMvt : MonoBehaviour
                 Debug.Log("you can now push yipee!!");
 
             }
-        } else {
+        }
+        else
+        {
             Debug.Log("There is nothing to push");
         }
     }
 
     void StopPushing()
     {
-        if(_pushableObject != null)
+        if (_pushableObject != null)
         {
             Rigidbody rb = _pushableObject.GetComponent<Rigidbody>();
             if (rb != null)
@@ -263,7 +278,7 @@ public class ThirdViewMvt : MonoBehaviour
             if (joint != null)
             {
                 Destroy(joint);
-            }   
+            }
             _isPushing = false;
             _pushableObject = null;
 
@@ -272,3 +287,4 @@ public class ThirdViewMvt : MonoBehaviour
         }
     }
 }
+
