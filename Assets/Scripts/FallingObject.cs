@@ -9,7 +9,14 @@ public class FallingObject : MonoBehaviour
     private bool triggered;
     private bool finished;
 
-    public CinemachineVirtualCamera fallingObjectCam; // Caméra qui regarde l'objet qui tombe
+    public CinemachineVirtualCamera fallingObjectCam; 
+    public GameObject player; 
+    private ThirdViewMvt playerScript;
+
+    private void Start()
+    {
+        playerScript = player.GetComponent<ThirdViewMvt>();
+    }
 
     private void OnTriggerEnter(Collider other)
     {
@@ -17,6 +24,10 @@ public class FallingObject : MonoBehaviour
         {
             triggered = true;
             fallingObjectCam.Priority = 11;
+            if (playerScript != null)
+            {
+                playerScript.enabled = false;
+            }
         }
     }
     
@@ -26,6 +37,10 @@ public class FallingObject : MonoBehaviour
             triggered = false;
             finished = true;
             fallingObjectCam.Priority = 9;
+            if (playerScript != null)
+            {
+                playerScript.enabled = true;
+            }
             return;
         }
         if(triggered){

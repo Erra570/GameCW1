@@ -13,6 +13,11 @@ public class AreaEventTrigger : MonoBehaviour
         if (!collider.gameObject.CompareTag(tagPlayer))
             return;
         onTriggerEnter.Invoke();
-        Destroy(gameObject); //to not trigger again
+        if(!gameObject.CompareTag("Seeker")){
+            Destroy(gameObject); //to not trigger again
+        } else {
+            gameObject.GetComponent<Chase>().enabled = false;
+            gameObject.GetComponent<PatrolWithKeyPoints>().enabled = true;
+        }
     }
 }

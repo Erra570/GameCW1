@@ -1,40 +1,57 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class ThirdViewMvt : MonoBehaviour
 {
+    // Required variables
     public Animator animator;
     public CharacterController myController;
     public Transform myThirdViewCam;
 
+    // Variables for the player's movement
     public float standingSpeed;
     public float runningSpeed;
 
+    // Variables for the player's crouching state
     public float crouchingSpeed;
     public float crouchingHeight;
 
+    // Variables for the player's falling state
     public float fallingSpeedMultiply;
     public float toSmoothMvt_Time;
     private float _turnSmoothVelocity;
 
+    // Booleans to go from a state to another (crouching, rewinding, running, pushing)
     private float _standingHeight;
     private bool _isCrouching = false;
     private bool _isRewindOn = false;
     private bool _isRunning = false;
-
     private bool _isPushing = false;
+
+    // Variables for pushing objects
     private GameObject _pushableObject;
     public float pushForce = 3f;
     public float maxPushDistance = 2f;
 
+    // Variables for the game over panel
+    private Vector3 firstPosition;
+    public float maxFallDistance = -20f;
+    public GameObject gameOverPanel;
+    private Vector3 lastGroundedPosition;
+
+    // Start is called before the first frame update
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         _standingHeight = myController.height;
+        firstPosition = transform.position;
         //Debug.Log("Standing height : " + _standingHeight);
     }
+
+    // Update is called once per frame
     void Update()
     {
 
@@ -72,6 +89,16 @@ public class ThirdViewMvt : MonoBehaviour
                     rb.MovePosition(rb.position + moveDir);
                     myController.Move(moveDir);
                 }
+            }
+
+            // Falling :
+            if (Physics.Raycast(transform.position, Vector3.down, 1.1f))
+            {
+                lastGroundedPosition = transform.position;
+            }
+            if (lastGroundedPosition.y - transform.position.y > maxFallDistance)
+            {
+                GameOver();
             }
 
             // Moving :
@@ -135,15 +162,15 @@ public class ThirdViewMvt : MonoBehaviour
             // Running :
             if (Input.GetButton("Run") && !_isCrouching)
             {
-                _isRunning = !_isRunning;
+                _isRunning = true;
                 animator.SetBool("isRunning", true);
-            } else {
+            } else if (Input.GetButtonUp("Run")){
                 _isRunning = false;
                 animator.SetBool("isRunning", false);
             }
 
 
-
+            // Pushing :
             if (Input.GetKeyDown(KeyCode.E))
             {
                 if (_isPushing)
@@ -154,6 +181,17 @@ public class ThirdViewMvt : MonoBehaviour
                 {
                     StartPushing();
                 }
+            }
+
+            // Restarting the game after a game over
+            if (gameOverPanel.activeSelf)
+            {
+                Time.timeScale = 0;
+                if (Input.GetKeyDown(KeyCode.Space))
+                {
+                    RestartGame();
+                }
+
             }
         }
 
@@ -170,6 +208,22 @@ public class ThirdViewMvt : MonoBehaviour
         }
     }
 
+    // Game over function
+    void GameOver()
+    {
+        Debug.Log("Dead!");
+        gameOverPanel.SetActive(true);
+    }
+
+    // Restarting the game
+    void RestartGame()
+    {
+        gameOverPanel.SetActive(false);
+        Time.timeScale = 1;
+        transform.position = firstPosition;
+    }
+
+    // Toggling the rewind mode
     void ToggleRewind()
     {
         _isRewindOn = !_isRewindOn;
@@ -225,6 +279,7 @@ public class ThirdViewMvt : MonoBehaviour
         }
     }
 
+    // Pushing objects
     void StartPushing()
     {
         if (_isPushing || _pushableObject != null) return;
@@ -266,6 +321,7 @@ public class ThirdViewMvt : MonoBehaviour
         }
     }
 
+    // Stopping pushing objects
     void StopPushing()
     {
         if (_pushableObject != null)
