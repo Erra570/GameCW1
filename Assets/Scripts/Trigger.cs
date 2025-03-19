@@ -12,10 +12,10 @@ public class Trigger : MonoBehaviour
     }
 
     void OnTriggerEnter(Collider other){
-        door.SetActive(false);
+        Destroy(door);
     }
 
     void OnTriggerExit(Collider other){
-        // do nothing for now
+        Destroy(gameObject); //avoid load unecessary things
     }
 }
