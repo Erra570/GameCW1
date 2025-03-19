@@ -23,7 +23,12 @@ public class InteractionPromptUI : MonoBehaviour
 
     public void SetUp(string promptText)
     {
-        //_promptText.text = promptText; does not work for the moment
+        if(promptText != null && promptText != "")
+            _promptText.text = promptText;
+
+        else
+            _promptText.text = "Press [E]";
+        
         _uiPanel.SetActive(true);
         IsDisplayed = true;
     }
