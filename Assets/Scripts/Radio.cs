@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class Radio : MonoBehaviour, IInteractable
 {
     [SerializeField] private string _prompt;
-    public string InteractionPrompt => _prompt; //useless for the moment
+    public string InteractionPrompt => _prompt; // Needs to be corrected
     private bool isInteracting = false;
     public RectTransform radioCursor;  // Radio cursor
     public Button leftButton;    // Left movement button
