@@ -16,6 +16,6 @@ public class Trigger : MonoBehaviour
     }
 
     void OnTriggerExit(Collider other){
-        Destroy(gameObject); //avoid load unecessary things
+        Destroy(gameObject); //avoid loading unecessary things
     }
 }
