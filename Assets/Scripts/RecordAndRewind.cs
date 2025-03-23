@@ -47,34 +47,54 @@ public class RecordAndRewind : MonoBehaviour
         _rotations.Add(transform.rotation);
     }
 
-    public void Rewind(){
-        if (_positions.Count > 0)
+    public void Rewind()
+    {
+        if (_positions.Count > 1)
         {
-            transform.position = _positions[_positions.Count - 1];
-            transform.rotation = _rotations[_rotations.Count - 1];
+            Vector3 lastPos = _positions[_positions.Count - 1];
+            Quaternion lastRot = _rotations[_rotations.Count - 1];
+
+            // Calculate velocity based on previous position (smooth rewind effect)
+            Vector3 rewindVelocity = (lastPos - transform.position) / Time.fixedDeltaTime;
+
+            rb.velocity = rewindVelocity;  // Apply velocity instead of teleporting
+            rb.MoveRotation(lastRot);      // Preserve rotation with physics
+
+            // Remove the last position after applying it
             _positions.RemoveAt(_positions.Count - 1);
             _rotations.RemoveAt(_rotations.Count - 1);
-        } else {
+        }
+        else
+        {
             StopRewind();
         }
     }
 
+
     public void StartRewind()
     {
-        if(_isBeingPushed){
-            return;
-        }
+        if (_isBeingPushed) return;
+
         _isRewinding = true;
-        rb.isKinematic = true;
+        rb.isKinematic = false; // Keep physics enabled
+        rb.velocity = Vector3.zero; // Prevent sudden movements
+        rb.mass = 1000000;
+        rb.angularVelocity = Vector3.zero;
         Debug.Log("Rewinding...");
     }
 
     public void StopRewind()
     {
         _isRewinding = false;
-        rb.isKinematic = false;
+    
+        // Keep current velocity to avoid instant stop
+        rb.mass = 5;
+        rb.velocity *= 0.5f; // Reduce it gradually instead of stopping suddenly
+        rb.angularVelocity = Vector3.zero;
+
         Debug.Log("Rewind stopped.");
     }
+
 
     public void SetBeingPushed(bool isBeingPushed){
         _isBeingPushed = isBeingPushed;

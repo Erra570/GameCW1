@@ -7,12 +7,17 @@ public class ThirdViewMvt : MonoBehaviour
 {
     // Required variables
     public Animator animator;
-    public CharacterController myController;
+    public Rigidbody myRb;
     public Transform myThirdViewCam;
+
+    // Variables for the player force factor
+    public float movementForce = 10f;
+    public float jumpForce = 5f;
 
     // Variables for the player's movement
     public float standingSpeed;
     public float runningSpeed;
+
 
     // Variables for the player's crouching state
     public float crouchingSpeed;
@@ -46,9 +51,15 @@ public class ThirdViewMvt : MonoBehaviour
     {
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
-        _standingHeight = myController.height;
+        myRb = GetComponent<Rigidbody>();
+        myRb.freezeRotation = true;
         firstPosition = transform.position;
         //Debug.Log("Standing height : " + _standingHeight);
+    }
+
+    bool IsGrounded()
+    {
+        return Physics.Raycast(transform.position, Vector3.down, 1.1f);
     }
 
     // Update is called once per frame
@@ -87,7 +98,8 @@ public class ThirdViewMvt : MonoBehaviour
                 {
                     Vector3 moveDir = transform.forward * moveInput * standingSpeed * Time.deltaTime;
                     rb.MovePosition(rb.position + moveDir);
-                    myController.Move(moveDir);
+                    myRb.MovePosition(rb.position + moveDir);
+                    myRb.AddForce(moveDir);
                 }
             }
 
@@ -106,20 +118,26 @@ public class ThirdViewMvt : MonoBehaviour
             {
                 if (direction.magnitude >= 0.1f)
                 {
+                    // Rotate the player towards movement direction
                     float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + myThirdViewCam.eulerAngles.y;
                     float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref _turnSmoothVelocity, toSmoothMvt_Time);
                     transform.rotation = Quaternion.Euler(0f, angle, 0f);
 
+                    // Move in the intended direction
                     Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+                    myRb.velocity = new Vector3(moveDir.x * (_isCrouching ? crouchingSpeed : (_isRunning ? runningSpeed : standingSpeed)),
+                    myRb.velocity.y, // Keep vertical velocity (jumping, falling)
+                    moveDir.z * (_isCrouching ? crouchingSpeed : (_isRunning ? runningSpeed : standingSpeed)));
 
-                    myController.Move(moveDir.normalized * (_isCrouching ? crouchingSpeed : (_isRunning ? runningSpeed : standingSpeed)) * Time.deltaTime);
                     animator.SetBool("isWalking", true);
                 }
                 else
-                {
-                    animator.SetBool("isWalking", false);
-                }
+            {
+                animator.SetBool("isWalking", false);
+                // Stop horizontal movement when no input
+                myRb.velocity = new Vector3(0, myRb.velocity.y, 0);
             }
+            }   
             else
             {
                 float moveInput = Input.GetAxisRaw("Vertical");
@@ -130,30 +148,26 @@ public class ThirdViewMvt : MonoBehaviour
                     {
                         Vector3 moveDir = transform.forward * moveInput * pushForce * Time.deltaTime;
                         rb.MovePosition(rb.position + moveDir);
-                        myController.Move(moveDir);
+                        myRb.velocity = new Vector3(moveDir.x, myRb.velocity.y, moveDir.z);
                     }
                     animator.SetBool("isWalking", true);
                 }
                 else
                 {
                     animator.SetBool("isWalking", false);
+                    myRb.velocity = new Vector3(0, myRb.velocity.y, 0);
                 }
             }
-
-            // Falling :
-            if (!myController.isGrounded)
-            {
-                Vector3 mvt = Vector3.zero + Physics.gravity;
-                myController.Move(mvt * fallingSpeedMultiply * Time.deltaTime);
-            }
-
             // Crouching : 
             if (Input.GetButtonDown("Crouch") && !_isRunning)
             {
                 _isCrouching = !_isCrouching;
                 animator.SetBool("isCrouching", _isCrouching);
 
-                myController.height = _isCrouching ? crouchingHeight : _standingHeight; // the controller mesh
+                CapsuleCollider col = GetComponent<CapsuleCollider>();
+                col.height = _isCrouching ? crouchingHeight : _standingHeight;
+                col.center = new Vector3(col.center.x, col.height / 2, col.center.z); // Adjust center to avoid sinking into the ground
+
 
                 // to change once we have a real character :
                 // transform.localScale = new Vector3(1, _isCrouching?crouchingHeight:_standingHeight, 1); //The "shape"
